@@ -180,8 +180,8 @@ class Fitter(object):
 
     def _update_data_pdf(self):
         # histogram retuns X with N+1 values. So, we rearrange the X output into only N
-        self.y_cont, self.x_cont = np.histogram(self._data, bins=self.bins, density=self._density)
-        self.x_cont = [(this + self.x_cont[i + 1]) / 2.0 for i, this in enumerate(self.x_cont[0:-1])]
+        self.y_cont, self.bins_cont = np.histogram(self._data, bins=self.bins, density=self._density)
+        self.x_cont = [(this + self.bins_cont[i + 1]) / 2.0 for i, this in enumerate(self.bins_cont[0:-1])]
 
     def _update_data_pmf(self):
         # get bin_min & bin_max
@@ -190,10 +190,10 @@ class Fitter(object):
         bin_max = np.floor(np.max(self._data)) + .5
         if np.max(self._data) >= bin_max: bin_max += 1
         # get bins
-        bins = [(bin_min + i) for i in range(0, int(bin_max - bin_min) + 1, 1)]
+        self.bins_disc = [(bin_min + i) for i in range(0, int(bin_max - bin_min) + 1, 1)]
 
         # histogram retuns X with N+1 values. So, we rearrange the X output into only N
-        self.y_disc, self.x_disc = np.histogram(self._data, bins=bins, density=self._density)
+        self.y_disc, self.x_disc = np.histogram(self._data, bins=self.bins_disc, density=self._density)
         self.x_disc = [(this + self.x_disc[i + 1]) / 2.0 for i, this in enumerate(self.x_disc[0:-1])]
 
     def _trim_data(self):
@@ -248,7 +248,10 @@ class Fitter(object):
             >>> import fitter
             >>> fitter.Fitter(data).hist()
         """
-        _ = pylab.hist(self._data, bins=self.bins, density=self._density)
+        if len(self.fitted_pdf) == 0 and len(self.fitted_pmf) > 0:
+            _ = pylab.hist(self._data, bins=self.bins_disc, density=self._density)
+        else:
+            _ = pylab.hist(self._data, bins=self.bins_cont, density=self._density)
         pylab.grid(True)
 
     def _fit_single_distribution(self, distribution, progress: bool):
